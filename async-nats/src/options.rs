@@ -924,6 +924,56 @@ impl ConnectOptions {
         self.read_buffer_capacity = size;
         self
     }
+
+    /// Load configuration from environment variables.
+    ///
+    /// Automatically loads all supported `NATS_*` environment variables.
+    /// Use this to simplify configuration from the environment.
+    ///
+    /// For sensitive values (`TOKEN`, `PASSWORD`), use `_FILE` variants to read from files
+    /// instead of passing secrets directly as environment variables. Inline values take
+    /// priority over file-based values.
+    ///
+    /// # Supported Environment Variables
+    ///
+    /// ## Authentication (checked in priority order)
+    /// - `NATS_CREDS_FILE`: Path to credentials file (recommended for Synadia Cloud)
+    /// - `NATS_NKEY`: NKey seed
+    /// - `NATS_USER` + `NATS_PASSWORD` or `NATS_PASSWORD_FILE`: Username and password
+    /// - `NATS_TOKEN` or `NATS_TOKEN_FILE`: Auth token
+    ///
+    /// ## TLS
+    /// - `NATS_TLS_CERT`: Path to client certificate
+    /// - `NATS_TLS_KEY`: Path to client key
+    /// - `NATS_TLS_CA_CERT`: Path to CA certificate
+    /// - `NATS_REQUIRE_TLS`: Set to any value to require TLS
+    /// - `NATS_TLS_FIRST`: Set to any value to use TLS first
+    ///
+    /// ## Connection
+    /// - `NATS_CLIENT_NAME`: Client name
+    /// - `NATS_CONNECTION_TIMEOUT_SECS`: Connection timeout in seconds
+    /// - `NATS_REQUEST_TIMEOUT_SECS`: Request timeout in seconds
+    /// - `NATS_PING_INTERVAL_SECS`: Ping interval in seconds
+    /// - `NATS_MAX_RECONNECTS`: Maximum reconnect attempts
+    /// - `NATS_NO_ECHO`: Set to any value to disable echo
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), async_nats::ConnectError> {
+    /// let client = async_nats::ConnectOptions::new()
+    ///     .from_env()
+    ///     .await
+    ///     .unwrap()
+    ///     .connect("nats://localhost:4222")
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn from_env(self) -> std::io::Result<ConnectOptions> {
+        crate::env_config::apply_env_config(self).await
+    }
 }
 
 pub(crate) type AsyncCallbackArg1<A, T> =

@@ -250,6 +250,7 @@ pub(crate) mod auth_utils;
 pub mod client;
 pub mod connection;
 mod connector;
+mod env_config;
 mod options;
 
 pub use auth::Auth;
